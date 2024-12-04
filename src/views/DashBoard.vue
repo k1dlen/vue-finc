@@ -2,7 +2,7 @@
   <div class="h-full p-4 overflow-y-auto">
     <h1 class="mb-6 text-3xl font-bold">Ваши Финансы</h1>
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
       <div class="p-6 bg-white rounded shadow">
         <h2 class="text-xl font-semibold">Доходы</h2>
         <p class="text-2xl font-bold text-green-500">{{ userData.income || 0 }} ₽</p>
@@ -15,14 +15,25 @@
         <h2 class="text-xl font-semibold">Накопления</h2>
         <p class="text-2xl font-bold text-blue-500">{{ totalSavings }} ₽</p>
       </div>
+      <div class="p-6 bg-white rounded shadow">
+        <h2 class="text-xl font-semibold">Баланс</h2>
+        <p class="text-2xl font-bold text-yellow-500">
+          {{ userData.income - userData.expenses || 0 }} ₽
+        </p>
+      </div>
     </div>
+    <div v-if="recommendationMessage" class="p-4 mt-6 bg-red-100 rounded shadow">
+        <h2 class="text-lg font-semibold text-red-600">Следите за тратами.</h2>
+        <p>{{ recommendationMessage }}</p>
+      </div>
 
     <div class="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-2">
+      <!-- Доходы и Расходы -->
       <div class="p-6 bg-white rounded shadow h-80">
         <h2 class="mb-4 text-xl font-semibold">Доходы и Расходы</h2>
         <div class="flex items-center justify-center h-full">
           <template v-if="incomeExpenseDataAvailable">
-            <canvas id="incomeExpenseChart" class="w-full h-64 max-h-64"></canvas>
+            <canvas id="incomeExpenseChart" class="w-full max-h-60"></canvas>
           </template>
           <template v-else>
             <p class="text-gray-500">Пока нет данных</p>
@@ -30,11 +41,12 @@
         </div>
       </div>
 
+      <!-- Накопления -->
       <div class="p-6 bg-white rounded shadow h-80">
         <h2 class="mb-4 text-xl font-semibold">Накопления</h2>
         <div class="flex items-center justify-center h-full">
           <template v-if="savingsDataAvailable">
-            <canvas id="savingsChart" class="w-full h-64 max-h-64"></canvas>
+            <canvas id="savingsChart" class="w-full max-h-60"></canvas>
           </template>
           <template v-else>
             <p class="text-gray-500">Пока нет данных</p>
@@ -43,6 +55,7 @@
       </div>
     </div>
 
+    <!-- Добавление накоплений -->
     <div class="p-6 mt-6 bg-white rounded shadow">
       <h2 class="mb-4 text-xl font-semibold">Добавить Накопление</h2>
       <input
@@ -68,6 +81,7 @@
       </button>
     </div>
 
+    <!-- Список накоплений -->
     <div
       v-for="(saving, index) in userData.savings"
       :key="index"
@@ -94,6 +108,7 @@
       </div>
     </div>
 
+    <!-- Модальное окно изменения накопления -->
     <div
       v-if="showModal"
       class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
@@ -145,13 +160,17 @@ export default {
     const incomeExpenseChart = ref(null)
     const savingsChart = ref(null)
 
+    const recommendationMessage = computed(() => {
+      if (userData.value.income - userData.value.expenses < 0) {
+        return 'Ваши расходы превышают доходы.'
+      }
+    })
+
     const totalSavings = computed(() =>
       userData.value.savings.reduce((sum, saving) => sum + saving.amount, 0),
     )
 
-    const incomeExpenseDataAvailable = computed(
-      () => userData.value.income > 0 || userData.value.expenses > 0,
-    )
+    const incomeExpenseDataAvailable = computed(() => userData.value.transactions.length > 0)
 
     const savingsDataAvailable = computed(
       () =>
@@ -167,58 +186,88 @@ export default {
     }
 
     const drawCharts = () => {
-      if (incomeExpenseDataAvailable.value) {
-        destroyChart(incomeExpenseChart)
-        const incomeExpenseCtx = document.getElementById('incomeExpenseChart')?.getContext('2d')
-        if (incomeExpenseCtx) {
-          incomeExpenseChart.value = new Chart(incomeExpenseCtx, {
-            type: 'bar',
-            data: {
-              labels: ['Доходы', 'Расходы'],
-              datasets: [
-                {
-                  label: 'Финансовые данные',
-                  data: [userData.value.income || 0, userData.value.expenses || 0],
-                  backgroundColor: ['#6CBF6E', '#F97373'],
-                  borderWidth: 2,
-                },
-              ],
+      // График доходов и расходов
+      destroyChart(incomeExpenseChart)
+      const incomeExpenseCtx = document.getElementById('incomeExpenseChart')?.getContext('2d')
+      if (incomeExpenseDataAvailable.value && incomeExpenseCtx) {
+        const incomeTransactions = userData.value.transactions.filter((t) => t.type === 'income')
+        const expenseTransactions = userData.value.transactions.filter((t) => t.type === 'expense')
+
+        incomeExpenseChart.value = new Chart(incomeExpenseCtx, {
+          type: 'bar',
+          data: {
+            labels: [
+              ...incomeTransactions.map((t) => t.description || 'Доход'),
+              ...expenseTransactions.map((t) => t.description || 'Расход'),
+            ],
+            datasets: [
+              {
+                label: 'Доходы',
+                data: incomeTransactions.map((t) => t.amount),
+                backgroundColor: '#4CAF50',
+              },
+              {
+                label: 'Расходы',
+                data: expenseTransactions.map((t) => t.amount),
+                backgroundColor: '#F44336',
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom',
+              },
             },
-            options: {
-              responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
             },
-          })
-        }
+          },
+        })
       }
 
-      if (savingsDataAvailable.value) {
-        destroyChart(savingsChart)
-        const savingsCtx = document.getElementById('savingsChart')?.getContext('2d')
-        if (savingsCtx) {
-          savingsChart.value = new Chart(savingsCtx, {
-            type: 'doughnut',
-            data: {
-              labels: userData.value.savings.map((saving) => saving.name || 'Без названия'),
-              datasets: [
-                {
-                  label: 'Накопления',
-                  data: userData.value.savings.map((saving) => saving.amount || 0),
-                  backgroundColor: ['#FF9F80', '#80C3FF', '#E880FF'],
-                },
-              ],
+      // График накоплений
+      destroyChart(savingsChart)
+      const savingsCtx = document.getElementById('savingsChart')?.getContext('2d')
+      if (savingsDataAvailable.value && savingsCtx) {
+        savingsChart.value = new Chart(savingsCtx, {
+          type: 'doughnut',
+          data: {
+            labels: userData.value.savings.map((saving) => saving.name || 'Без названия'),
+            datasets: [
+              {
+                label: 'Накопления',
+                data: userData.value.savings.map((saving) => saving.amount || 0),
+                backgroundColor: ['#FF9F80', '#80C3FF', '#E880FF'],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom',
+              },
             },
-            options: {
-              responsive: true,
-            },
-          })
-        }
+          },
+        })
       }
     }
 
     const addSavingHandler = () => {
       const initialAmount = parseFloat(savingInitial.value || 0)
-      if (!savingName.value || !savingGoal.value) return
+      if (!savingName.value || savingGoal.value <= 0) {
+        alert('Введите корректное название и цель накопления.')
+        return
+      }
+
+      // Передаем начальную сумму в функцию addSaving
       addSaving(savingName.value, parseFloat(savingGoal.value), initialAmount)
+
+      // Сбрасываем поля после добавления
       savingName.value = ''
       savingGoal.value = 0
       savingInitial.value = 0
@@ -265,6 +314,7 @@ export default {
       openEditModal,
       saveChanges,
       closeModal,
+      recommendationMessage,
     }
   },
 }

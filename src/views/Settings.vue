@@ -1,14 +1,14 @@
 <template>
-  <div>
-    <h1 class="text-3xl font-bold mb-6">Настройки</h1>
+  <div class="h-full p-4 overflow-y-auto">
+    <h1 class="mb-6 text-3xl font-bold">Настройки</h1>
 
-    <div class="bg-white p-6 rounded shadow mb-6">
-      <h2 class="text-xl font-semibold mb-4">Финансовая Подушка</h2>
+    <div class="p-6 mb-6 bg-white rounded shadow">
+      <h2 class="mb-4 text-xl font-semibold">Финансовая Подушка</h2>
       <label class="flex items-center space-x-4">
         <input
           type="checkbox"
           v-model="isSafetyEnabled"
-          class="form-checkbox h-6 w-6"
+          class="w-6 h-6 form-checkbox"
         />
         <span>Автоматическое накопление 15% от дохода</span>
       </label>
