@@ -22,13 +22,13 @@
         </p>
       </div>
     </div>
+
     <div v-if="recommendationMessage" class="p-4 mt-6 bg-red-100 rounded shadow">
-        <h2 class="text-lg font-semibold text-red-600">Следите за тратами.</h2>
-        <p>{{ recommendationMessage }}</p>
-      </div>
+      <h2 class="text-lg font-semibold text-red-600">Следите за тратами.</h2>
+      <p>{{ recommendationMessage }}</p>
+    </div>
 
     <div class="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-2">
-      <!-- Доходы и Расходы -->
       <div class="p-6 bg-white rounded shadow h-80">
         <h2 class="mb-4 text-xl font-semibold">Доходы и Расходы</h2>
         <div class="flex items-center justify-center h-full">
@@ -40,8 +40,7 @@
           </template>
         </div>
       </div>
-
-      <!-- Накопления -->
+      
       <div class="p-6 bg-white rounded shadow h-80">
         <h2 class="mb-4 text-xl font-semibold">Накопления</h2>
         <div class="flex items-center justify-center h-full">
@@ -55,7 +54,6 @@
       </div>
     </div>
 
-    <!-- Добавление накоплений -->
     <div class="p-6 mt-6 bg-white rounded shadow">
       <h2 class="mb-4 text-xl font-semibold">Добавить Накопление</h2>
       <input
@@ -81,7 +79,6 @@
       </button>
     </div>
 
-    <!-- Список накоплений -->
     <div
       v-for="(saving, index) in userData.savings"
       :key="index"
@@ -108,7 +105,6 @@
       </div>
     </div>
 
-    <!-- Модальное окно изменения накопления -->
     <div
       v-if="showModal"
       class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
@@ -141,7 +137,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted} from 'vue'
 import { Chart } from 'chart.js/auto'
 import useUserData from '../composables/useUserData'
 
@@ -186,8 +182,9 @@ export default {
     }
 
     const drawCharts = () => {
-      // График доходов и расходов
       destroyChart(incomeExpenseChart)
+      destroyChart(savingsChart)
+
       const incomeExpenseCtx = document.getElementById('incomeExpenseChart')?.getContext('2d')
       if (incomeExpenseDataAvailable.value && incomeExpenseCtx) {
         const incomeTransactions = userData.value.transactions.filter((t) => t.type === 'income')
@@ -229,8 +226,6 @@ export default {
         })
       }
 
-      // График накоплений
-      destroyChart(savingsChart)
       const savingsCtx = document.getElementById('savingsChart')?.getContext('2d')
       if (savingsDataAvailable.value && savingsCtx) {
         savingsChart.value = new Chart(savingsCtx, {
@@ -264,10 +259,8 @@ export default {
         return
       }
 
-      // Передаем начальную сумму в функцию addSaving
       addSaving(savingName.value, parseFloat(savingGoal.value), initialAmount)
-
-      // Сбрасываем поля после добавления
+      notify('success', 'Накопление успешно добавлено!')
       savingName.value = ''
       savingGoal.value = 0
       savingInitial.value = 0
@@ -284,6 +277,7 @@ export default {
     const saveChanges = () => {
       editingSaving.value.amount += parseFloat(editingAmount.value || 0)
       editSaving(editingSaving.value)
+      alert('Изменения успешно сохранены!')
       closeModal()
 
       drawCharts()

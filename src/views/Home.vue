@@ -7,8 +7,8 @@
       <div class="mb-4">
         <label class="block mb-2">Тип</label>
         <select v-model="operationType" class="w-full p-2 border">
-          <option value="Доход">Доход</option>
-          <option value="Расход">Расход</option>
+          <option value="income">Доход</option>
+          <option value="expense">Расход</option>
         </select>
       </div>
       <div class="mb-4">
@@ -19,10 +19,7 @@
         <label class="block mb-2">Сумма</label>
         <input v-model="amount" type="number" class="w-full p-2 border" />
       </div>
-      <button
-        @click="addOperation"
-        class="px-4 py-2 text-white bg-blue-500 rounded"
-      >
+      <button @click="addOperation" class="px-4 py-2 text-white bg-blue-500 rounded">
         Добавить
       </button>
     </div>
@@ -36,7 +33,7 @@
           class="flex justify-between pb-2 mb-2 border-b"
         >
           <span>{{ operation.date }} - {{ operation.description }}</span>
-          <span :class="operation.type === 'Доход' ? 'text-green-500' : 'text-red-500'">
+          <span :class="operation.type === 'income' ? 'text-green-500' : 'text-red-500'">
             {{ operation.amount }} ₽
           </span>
         </li>
@@ -46,23 +43,26 @@
 </template>
 
 <script>
-import { ref } from "vue";
-import useUserData from "../composables/useUserData";
+import { ref } from 'vue'
+import useUserData from '../composables/useUserData'
 
 export default {
   setup() {
-    const { userData, addTransaction } = useUserData();
+    const { userData, addTransaction } = useUserData()
 
-    const operationType = ref("Доход");
-    const description = ref("");
-    const amount = ref(0);
+    const operationType = ref('income')
+    const description = ref('')
+    const amount = ref(0)
 
     const addOperation = () => {
-      if (!description.value || !amount.value) return;
-      addTransaction(operationType.value, description.value, parseFloat(amount.value));
-      description.value = "";
-      amount.value = 0;
-    };
+      if (!description.value || !amount.value) {
+        alert('Введите корректное описание и сумму.')
+        return
+      }
+      addTransaction(operationType.value, description.value, parseFloat(amount.value))
+      description.value = ''
+      amount.value = 0
+    }
 
     return {
       userData,
@@ -70,7 +70,7 @@ export default {
       description,
       amount,
       addOperation,
-    };
+    }
   },
-};
+}
 </script>

@@ -55,17 +55,17 @@ export default {
 
       localStorage.setItem(`user_${userId}`, JSON.stringify(newUser))
       localStorage.setItem('userId', userId)
-      successMessage.value = 'Регистрация успешна! Перенаправление...'
+      successMessage.value = "Регистрация успешна!";
       setTimeout(() => {
-        window.location.href = '/home'
+        window.location.href = '/'
       }, 1000)
     }
 
     return {
       nickname,
       password,
-      successMessage,
       registerUser,
+      successMessage,
     }
   },
 }

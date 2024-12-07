@@ -30,49 +30,48 @@
 </template>
 
 <script>
-import { ref } from "vue";
-import bcrypt from "bcryptjs";
+import { ref } from 'vue'
+import bcrypt from 'bcryptjs'
 
 export default {
   setup() {
-    const nickname = ref("");
-    const password = ref("");
-    const isLoggedIn = ref(!!localStorage.getItem("userId"));
+    const nickname = ref('')
+    const password = ref('')
+    const isLoggedIn = ref(!!localStorage.getItem('userId'))
     const userData = ref(
       isLoggedIn.value
-        ? JSON.parse(localStorage.getItem(`user_${localStorage.getItem("userId")}`))
-        : null
-    );
+        ? JSON.parse(localStorage.getItem(`user_${localStorage.getItem('userId')}`))
+        : null,
+    )
 
     const login = async () => {
       const allUsers = Object.keys(localStorage)
-        .filter((key) => key.startsWith("user_"))
-        .map((key) => JSON.parse(localStorage.getItem(key)));
+        .filter((key) => key.startsWith('user_'))
+        .map((key) => JSON.parse(localStorage.getItem(key)))
 
-      const user = allUsers.find((u) => u.nickname === nickname.value);
+      const user = allUsers.find((u) => u.nickname === nickname.value)
 
       if (!user) {
-        alert("Неверное имя пользователя или пароль.");
-        return;
+        alert('Неверное имя пользователя или пароль.')
+        return
       }
 
-      const passwordMatch = await bcrypt.compare(password.value, user.password);
+      const passwordMatch = await bcrypt.compare(password.value, user.password)
       if (!passwordMatch) {
-        alert("Неверное имя пользователя или пароль.");
-        return;
+        alert('Неверное имя пользователя или пароль.')
+        return
       }
 
-      localStorage.setItem("userId", user.id);
+      localStorage.setItem('userId', user.id)
       setTimeout(() => {
         window.location.href = '/dashboard'
       }, 500)
-    };
+    }
 
     const logout = () => {
-      localStorage.removeItem("userId");
-      location.reload();
-    };
-
+      localStorage.removeItem('userId')
+      location.reload()
+    }
 
     return {
       nickname,
@@ -81,7 +80,7 @@ export default {
       userData,
       login,
       logout,
-    };
+    }
   },
-};
+}
 </script>
