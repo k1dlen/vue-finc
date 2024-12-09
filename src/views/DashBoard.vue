@@ -40,7 +40,7 @@
           </template>
         </div>
       </div>
-      
+
       <div class="p-6 bg-white rounded shadow h-80">
         <h2 class="mb-4 text-xl font-semibold">Накопления</h2>
         <div class="flex items-center justify-center h-full">
@@ -98,7 +98,32 @@
           <button @click="openEditModal(index)" class="px-4 py-2 text-white bg-yellow-500 rounded">
             Изменить
           </button>
-          <button @click="deleteSaving(index)" class="px-4 py-2 text-white bg-red-500 rounded">
+          <button @click="confirmDelete(index)" class="px-4 py-2 text-white bg-red-500 rounded">
+            Удалить
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="isModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-50"
+    >
+      <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
+        <h2 class="mb-4 text-xl font-bold">Подтвердите удаление</h2>
+        <p class="mb-6 text-gray-600">
+          Вы уверены, что хотите удалить накопление
+          <span class="font-semibold">{{ savingToDelete?.name }}</span
+          >?
+        </p>
+        <div class="flex justify-end space-x-3">
+          <button @click="closeWindow" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">
+            Отмена
+          </button>
+          <button
+            @click="deleteAndClose(index)"
+            class="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600"
+          >
             Удалить
           </button>
         </div>
@@ -137,7 +162,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted} from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Chart } from 'chart.js/auto'
 import useUserData from '../composables/useUserData'
 
@@ -148,6 +173,20 @@ export default {
     const savingName = ref('')
     const savingGoal = ref(0)
     const savingInitial = ref(0)
+    const isModalOpen = ref(false)
+
+    const confirmDelete = (index) => {
+      isModalOpen.value = true; 
+    };
+
+    const closeWindow = () => {
+      isModalOpen.value = false;
+    };
+
+    const deleteAndClose = (index) => {
+      deleteSaving(index);
+      closeWindow(); 
+    };
 
     const showModal = ref(false)
     const editingSaving = ref({})
@@ -183,29 +222,38 @@ export default {
 
     const drawCharts = () => {
       destroyChart(incomeExpenseChart)
-      destroyChart(savingsChart)
 
       const incomeExpenseCtx = document.getElementById('incomeExpenseChart')?.getContext('2d')
+
       if (incomeExpenseDataAvailable.value && incomeExpenseCtx) {
         const incomeTransactions = userData.value.transactions.filter((t) => t.type === 'income')
         const expenseTransactions = userData.value.transactions.filter((t) => t.type === 'expense')
 
+        const incomeLabels = incomeTransactions.map(
+          (t, index) => `${index + 1} (Доход: ${t.description || 'Без описания'})`,
+        )
+        const expenseLabels = expenseTransactions.map(
+          (t, index) => `${index + 1} (Расход: ${t.description || 'Без описания'})`,
+        )
+
+        const labels = [...incomeLabels, ...expenseLabels]
+
+        const incomeData = incomeTransactions.map((t) => t.amount)
+        const expenseData = expenseTransactions.map((t) => t.amount)
+
         incomeExpenseChart.value = new Chart(incomeExpenseCtx, {
           type: 'bar',
           data: {
-            labels: [
-              ...incomeTransactions.map((t) => t.description || 'Доход'),
-              ...expenseTransactions.map((t) => t.description || 'Расход'),
-            ],
+            labels: labels,
             datasets: [
               {
                 label: 'Доходы',
-                data: incomeTransactions.map((t) => t.amount),
+                data: [...incomeData, ...Array(expenseData.length).fill(0)],
                 backgroundColor: '#4CAF50',
               },
               {
                 label: 'Расходы',
-                data: expenseTransactions.map((t) => t.amount),
+                data: [...Array(incomeData.length).fill(0), ...expenseData],
                 backgroundColor: '#F44336',
               },
             ],
@@ -217,7 +265,17 @@ export default {
                 position: 'bottom',
               },
             },
+            tooltips: {
+              callbacks: {
+                label: function (tooltipItem) {
+                  return `${tooltipItem.dataset.label}: ${tooltipItem.value} ₽`
+                },
+              },
+            },
             scales: {
+              x: {
+                stacked: true,
+              },
               y: {
                 beginAtZero: true,
               },
@@ -226,29 +284,32 @@ export default {
         })
       }
 
-      const savingsCtx = document.getElementById('savingsChart')?.getContext('2d')
-      if (savingsDataAvailable.value && savingsCtx) {
-        savingsChart.value = new Chart(savingsCtx, {
-          type: 'doughnut',
-          data: {
-            labels: userData.value.savings.map((saving) => saving.name || 'Без названия'),
-            datasets: [
-              {
-                label: 'Накопления',
-                data: userData.value.savings.map((saving) => saving.amount || 0),
-                backgroundColor: ['#FF9F80', '#80C3FF', '#E880FF'],
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: {
-                position: 'bottom',
+      if (savingsDataAvailable.value) {
+        destroyChart(savingsChart)
+        const savingsCtx = document.getElementById('savingsChart')?.getContext('2d')
+        if (savingsDataAvailable.value && savingsCtx) {
+          savingsChart.value = new Chart(savingsCtx, {
+            type: 'doughnut',
+            data: {
+              labels: userData.value.savings.map((saving) => saving.name || 'Без названия'),
+              datasets: [
+                {
+                  label: 'Накопления',
+                  data: userData.value.savings.map((saving) => saving.amount || 0),
+                  backgroundColor: ['#FF9F80', '#80C3FF', '#E880FF'],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                },
               },
             },
-          },
-        })
+          })
+        }
       }
     }
 
@@ -260,12 +321,13 @@ export default {
       }
 
       addSaving(savingName.value, parseFloat(savingGoal.value), initialAmount)
-      notify('success', 'Накопление успешно добавлено!')
+      alert('Накопление успешно добавлено!')
       savingName.value = ''
       savingGoal.value = 0
       savingInitial.value = 0
 
       drawCharts()
+      location.reload()
     }
 
     const openEditModal = (index) => {
@@ -309,6 +371,11 @@ export default {
       saveChanges,
       closeModal,
       recommendationMessage,
+      deleteSaving,
+      isModalOpen,
+      confirmDelete,
+      closeWindow,
+      deleteAndClose
     }
   },
 }

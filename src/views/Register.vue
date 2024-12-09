@@ -18,13 +18,21 @@
 
 <script>
 import { ref } from 'vue'
-import bcrypt from 'bcryptjs'
 
 export default {
   setup() {
     const nickname = ref('')
     const password = ref('')
     const successMessage = ref('')
+
+    const hashPassword = async (password) => {
+      const encoder = new TextEncoder()
+      const data = encoder.encode(password)
+      const hash = await crypto.subtle.digest('SHA-256', data)
+      return Array.from(new Uint8Array(hash))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('')
+    }
 
     const registerUser = async () => {
       if (!nickname.value || !password.value) {
@@ -41,8 +49,8 @@ export default {
         return
       }
 
-      const userId = new Date().getTime()
-      const hashedPassword = await bcrypt.hash(password.value, 10)
+      const userId = Date.now()
+      const hashedPassword = await hashPassword(password.value)
       const newUser = {
         id: userId,
         nickname: nickname.value,
@@ -55,7 +63,8 @@ export default {
 
       localStorage.setItem(`user_${userId}`, JSON.stringify(newUser))
       localStorage.setItem('userId', userId)
-      successMessage.value = "Регистрация успешна!";
+      successMessage.value = 'Регистрация успешна!'
+
       setTimeout(() => {
         window.location.href = '/'
       }, 1000)

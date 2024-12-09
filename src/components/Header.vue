@@ -1,17 +1,17 @@
 <template>
-  <div class="bg-gray-900 text-white flex flex-col justify-between h-screen">
+  <div class="flex flex-col justify-between h-screen text-white bg-gray-900">
     <div class="p-6 text-center">
       <p class="text-lg font-bold">
         <router-link
-          to="/"
+          to="/home"
           class="flex items-center justify-center">Мой План</router-link
         >
       </p>
     </div>
 
-    <nav class="flex-grow flex flex-col items-center gap-8 mt-8">
+    <nav class="flex flex-col items-center flex-grow gap-8 mt-8">
       <router-link
-        to="/"
+        to="/home"
         class="flex items-center justify-center w-16 h-16 rounded"
         :class="getClass('/')"
       >
@@ -40,7 +40,7 @@
       </router-link>
     </nav>
 
-    <div class="p-6 text-center text-xs text-gray-400">
+    <div class="p-6 text-xs text-center text-gray-400">
       <p>© 2024 Мой План</p>
     </div>
   </div>

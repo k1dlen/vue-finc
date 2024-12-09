@@ -31,7 +31,6 @@
 
 <script>
 import { ref } from 'vue'
-import bcrypt from 'bcryptjs'
 
 export default {
   setup() {
@@ -43,6 +42,15 @@ export default {
         ? JSON.parse(localStorage.getItem(`user_${localStorage.getItem('userId')}`))
         : null,
     )
+
+    const hashPassword = async (password) => {
+      const encoder = new TextEncoder()
+      const data = encoder.encode(password)
+      const hash = await crypto.subtle.digest('SHA-256', data)
+      return Array.from(new Uint8Array(hash))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('')
+    }
 
     const login = async () => {
       const allUsers = Object.keys(localStorage)
@@ -56,16 +64,14 @@ export default {
         return
       }
 
-      const passwordMatch = await bcrypt.compare(password.value, user.password)
-      if (!passwordMatch) {
+      const hashedPassword = await hashPassword(password.value)
+      if (hashedPassword !== user.password) {
         alert('Неверное имя пользователя или пароль.')
         return
       }
 
       localStorage.setItem('userId', user.id)
-      setTimeout(() => {
-        window.location.href = '/dashboard'
-      }, 500)
+      window.location.href = '/dashboard'
     }
 
     const logout = () => {

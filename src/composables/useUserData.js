@@ -27,7 +27,7 @@ export default function useUserData() {
       date: new Date().toLocaleDateString(),
     })
 
-    if (type === 'Доход') {
+    if (type === 'income') {
       userData.value.income += amount
 
       if (isSafetyEnabled.value) {
@@ -48,7 +48,7 @@ export default function useUserData() {
       }
     }
 
-    if (type === 'Расход') {
+    if (type === 'expense') {
       userData.value.expenses += amount
     }
 
