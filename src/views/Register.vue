@@ -66,7 +66,7 @@ export default {
       successMessage.value = 'Регистрация успешна!'
 
       setTimeout(() => {
-        window.location.href = '/'
+        window.location.href = '/home'
       }, 1000)
     }
 
