@@ -2,10 +2,7 @@
   <div class="flex flex-col justify-between h-screen text-white bg-gray-900">
     <div class="p-6 text-center">
       <p class="text-lg font-bold">
-        <router-link
-          to="/home"
-          class="flex items-center justify-center">Мой План</router-link
-        >
+        <router-link to="/home" class="flex items-center justify-center">Мой План</router-link>
       </p>
     </div>
 
@@ -13,7 +10,7 @@
       <router-link
         to="/home"
         class="flex items-center justify-center w-16 h-16 rounded"
-        :class="getClass('/')"
+        :class="getClass('/home')"
       >
         <img src="../assets/Home.svg" alt="home" class="w-10 h-10" />
       </router-link>
